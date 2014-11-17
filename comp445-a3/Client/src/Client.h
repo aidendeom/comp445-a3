@@ -34,7 +34,8 @@
 typedef enum 
 { 
 	GET=1, 
-	PUT 
+	PUT,
+	LIST
 } Direction;
 
 //types of results
@@ -126,6 +127,7 @@ public:
 	int sendAck(int, Ack *);
 
 	bool recFile(int, char *, char *, int);
+	bool recDir(SOCKET sock, std::string& outstring);
 	RecRes recResp(int, TWHandshake *);
 	RecRes recFrame(int, Msg *);
 	RecRes recAck(int, Ack *);

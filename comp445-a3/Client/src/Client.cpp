@@ -2,6 +2,7 @@
 #include <vector>
 #include <dirent.h>
 #include <utils.h>
+#include <sstream>
 
 using namespace std;
 
@@ -242,6 +243,66 @@ bool Client::recFile(int sock, char * filename, char * recHost, int cliNum)
 	}
 }
 
+bool Client::recDir(SOCKET sock, std::string& outstring)
+{
+	Msg frame;
+	Ack ack;
+	ack.packet_type = PktType::FRAME_ACK;
+
+	int seqNo = 0;
+
+	stringstream ss;
+
+	RecRes result = RecRes::TIMEOUT;
+
+	while (result == RecRes::TIMEOUT)
+		result = recFrame(sock, &frame);
+
+	if (result == RecRes::RECEIVE_ERROR)
+	{
+		err_sys("Failure receiving directory from server");
+		return false;
+	}
+	if (frame.header != INITIAL_DATA)
+	{
+		err_sys("First packet wasn't INITIAL_DATA");
+		return false;
+	}
+
+	ack.number = frame.snwseq;
+	if (sendAck(sock, &ack))
+		return false;
+
+	ss.write(frame.buffer, frame.buffer_length);
+
+	while (frame.header != FINAL_DATA)
+	{
+		result = RecRes::TIMEOUT;
+
+		while (result == RecRes::TIMEOUT)
+		{
+			result = recFrame(sock, &frame);
+		}
+		if (result == RecRes::RECEIVE_ERROR)
+		{
+			err_sys("Failure receiving directory from server");
+			return false;
+		}
+
+		if (frame.snwseq == seqNo)
+		{
+			ss.write(frame.buffer, frame.buffer_length);
+			seqNo ^= 1;
+		}
+
+		ack.number = frame.snwseq;
+		if (sendAck(sock, &ack))
+			return false;
+	}
+
+	outstring = ss.str();
+}
+
 //RECEIVE RESPONSE
 //takes all responses from server
 //returns the result (timeout, incoming packet, error)
@@ -449,7 +510,7 @@ void Client::run()
 			cout << "Enter command: "; 
 			cin >> direction;
 						
-			if ( strcmp(direction, "get") == 0 || strcmp(direction, "put") == 0 || strcmp(direction, "exit")==0 )
+			if ( strcmp(direction, "get") == 0 || strcmp(direction, "put") == 0 || strcmp(direction, "list") == 0 || strcmp(direction, "exit")==0 )
 			{
 				invalidCommand = false;
 			}
@@ -467,27 +528,33 @@ void Client::run()
 
 		//if the command is PUT, check for the filename
 		bool invalidFilename = false;
-		do
+		if (strcmp(direction, "get") == 0 || strcmp(direction, "put") == 0)
 		{
-			cout << getDirectoryItems();
-
-			cout << "Enter filename: "; 
-			cin >> filename; 
-
-			if(strcmp(direction, "put") == 0)
+			do
 			{
-				if( _access(filename, 0) == -1)
+				if (strcmp(direction, "get") == 0)
 				{
-					invalidFilename = true;
-					err_sys("The file does not exist!");
+					cout << getDirectoryItems();
+				}
+
+				cout << "Enter filename: ";
+				cin >> filename;
+
+				if (strcmp(direction, "put") == 0)
+				{
+					if (_access(filename, 0) == -1)
+					{
+						invalidFilename = true;
+						err_sys("The file does not exist!");
+					}
+					else
+						invalidFilename = false;
 				}
 				else
 					invalidFilename = false;
-			}
-			else
-				invalidFilename = false;
-			
-		} while(invalidFilename);
+
+			} while (invalidFilename);
+		}
 		
 		//check the hostname again
 		bool invalidHost = false;
@@ -538,6 +605,10 @@ void Client::run()
 			else if ( strcmp(direction, "put") == 0 )
 			{
 				hs.direction = PUT;
+			}
+			else if (strcmp(direction, "list") == 0)
+			{
+				hs.direction = LIST;
 			}
 			
 			if ( sendReq(sock, &hs, &sa_in) != sizeof(hs) )
@@ -620,6 +691,7 @@ void Client::run()
 					}
 				
 					//check that the file is to be sent or received (GET or PUT)
+					std::string directory;
 					switch (hs.direction)
 					{
 						case GET:
@@ -629,6 +701,11 @@ void Client::run()
 						case PUT:
 							if ( ! sendF(sock, hs.filename, hostname, hs.server_number) )
 								err_sys("An error occurred while sending the file.");
+							break;
+						case LIST:
+							if (!recDir(sock, directory))
+								err_sys("Error receiving directory");
+							cout << directory;
 							break;
 						default:
 							break;

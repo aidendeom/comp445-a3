@@ -126,7 +126,7 @@ bool Server::sendF(int sock, char * filename, char * sendHost, int cliNum)
 	}
 }
 
-int Server::sendDir(SOCKET sock, int server_number)
+int Server::sendDir(SOCKET sock)
 {
 	string directory(getDirectoryItems());
 	stringstream ss(directory);
@@ -140,7 +140,7 @@ int Server::sendDir(SOCKET sock, int server_number)
 	size_t numberOfFrames = directory.length() / MAX_FSIZE + 1;
 	size_t remainder = directory.length() % MAX_FSIZE;
 	
-	frame.snwseq = server_number;
+	frame.snwseq = 0;
 
 	for (size_t i = 1; i <= numberOfFrames; i++)
 	{
@@ -440,6 +440,10 @@ void Server::run()
 			if (TRACESER)
 				fout << "The user \"" << hs.username << "\" from hostname \"" << hs.hostname << "\" needs file \"" << hs.filename << "\" through PUT request" << endl;
 			hs.type = ACK_CNUM;
+		}
+		else if (hs.direction == LIST)
+		{
+			sendDir(sock);
 		}
 		else
 		{

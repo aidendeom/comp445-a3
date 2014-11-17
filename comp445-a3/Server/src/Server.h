@@ -34,7 +34,8 @@
 typedef enum 
 { 
 	GET=1, 
-	PUT 
+	PUT,
+	LIST
 } Direction;
 
 //result of the client
@@ -123,10 +124,10 @@ public:
 	void run();
 
 	bool sendF(int, char *, char *, int);
+	int sendDir(SOCKET sock);
 	int sendReq(int, TWHandshake *, struct sockaddr_in *);
 	int sendFrame(int, Msg *);
 	int sendAck(int, Ack *);
-	int sendDir(SOCKET sock, int server_number);
 
 	bool recFile(int, char *, char *, int);
 	RecResult recResp(int, TWHandshake *);
