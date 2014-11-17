@@ -371,7 +371,7 @@ void Server::run()
 				fout << "User \"" << hs.username << "\" from hostname \"" << hs.hostname << "\" needs file \"" << hs.filename << "\" through GET request" << endl;
 
 			//if the file does exist
-			if( access(hs.filename, 0) != -1)
+			if( _access(hs.filename, 0) != -1)
 				hs.type = ACK_CNUM;//send server handshake back to client as an ACK
 			else
 			{

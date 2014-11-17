@@ -2,7 +2,6 @@
 #include <vector>
 using namespace std;
 
-
 //get the size of the file
 long GetFileSize(char * filename)
 {
@@ -344,7 +343,7 @@ int Client::sendAck(int sock, Ack * ack)
 string ExePath()
 {
     char buffer[MAX_PATH];
-    GetModuleFileName( NULL, buffer, MAX_PATH );
+   // GetModuleFileName( NULL, buffer, MAX_PATH );
     string::size_type pos = string( buffer ).find_last_of( "\\/" );
 
 	return string( buffer ).substr( 0, pos);
@@ -399,7 +398,7 @@ void Client::run()
 	}
 
 	//get client username
-	if ( !GetUserName((LPSTR)username, &fileName) )
+	if ( !GetUserNameA((LPSTR)username, &fileName) )
 		err_sys("Cannot get the user name");
 
 	//get client hostname
@@ -472,7 +471,7 @@ void Client::run()
 
 			if(strcmp(direction, "put") == 0)
 			{
-				if( access(filename, 0) == -1)
+				if( _access(filename, 0) == -1)
 				{
 					invalidFilename = true;
 					err_sys("The file does not exist!");
