@@ -1,5 +1,8 @@
 #include "client.h"
 #include <vector>
+#include <dirent.h>
+#include <utils.h>
+
 using namespace std;
 
 //get the size of the file
@@ -466,6 +469,8 @@ void Client::run()
 		bool invalidFilename = false;
 		do
 		{
+			cout << getDirectoryItems();
+
 			cout << "Enter filename: "; 
 			cin >> filename; 
 

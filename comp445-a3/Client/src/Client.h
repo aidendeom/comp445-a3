@@ -101,7 +101,6 @@ typedef struct
 	char filename[FNAME_LENGTH];
 } TWHandshake;
 
-
 class Client
 {
     int sock;

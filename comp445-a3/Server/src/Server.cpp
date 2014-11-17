@@ -1,4 +1,7 @@
 #include "server.h"
+#include <dirent.h>
+#include <utils.h>
+#include <sstream>
 using namespace std;
 
 //return the size of the file
@@ -121,6 +124,56 @@ bool Server::sendF(int sock, char * filename, char * sendHost, int cliNum)
         if (TRACESER) { fout << "Problem with opening the requested file" << endl; }
 		return false;		
 	}
+}
+
+int Server::sendDir(SOCKET sock, int server_number)
+{
+	string directory(getDirectoryItems());
+	stringstream ss(directory);
+
+	Msg frame;
+	Ack ack;
+	ack.packet_type = FRAME_ACK;
+
+	long bytes_count = 0;
+
+	size_t numberOfFrames = directory.length() / MAX_FSIZE + 1;
+	size_t remainder = directory.length() % MAX_FSIZE;
+	
+	frame.snwseq = server_number;
+
+	for (size_t i = 1; i <= numberOfFrames; i++)
+	{
+		size_t length = i == numberOfFrames ? remainder : MAX_FSIZE;
+		ss.read(frame.buffer, length);
+		frame.buffer_length = length;
+		
+		if (i == 1)
+			frame.header = INITIAL_DATA;
+		else if (i == numberOfFrames)
+			frame.header = FINAL_DATA;
+		else
+			frame.header = DATA;
+
+		frame.packet_type = FRAME;
+		frame.snwseq++;
+
+		RecResult result = RecResult::TIMEOUT;
+
+		while (result == RecResult::TIMEOUT)
+		{
+			bytes_count += sendFrame(sock, &frame);
+			result = recAck(sock, &ack);
+		}
+
+		if (result == RecResult::REC_ERR)
+		{
+			err_sys("Failure sending directory to client");
+			return 0;
+		}
+	}
+
+	return bytes_count;
 }
 
 //receives the file during a client PUT

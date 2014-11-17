@@ -126,6 +126,7 @@ public:
 	int sendReq(int, TWHandshake *, struct sockaddr_in *);
 	int sendFrame(int, Msg *);
 	int sendAck(int, Ack *);
+	int sendDir(SOCKET sock, int server_number);
 
 	bool recFile(int, char *, char *, int);
 	RecResult recResp(int, TWHandshake *);
