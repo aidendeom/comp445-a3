@@ -148,6 +148,8 @@ int Server::sendDir(SOCKET sock)
 		ss.read(frame.buffer, length);
 		frame.buffer_length = length;
 		
+		printf("%d / %d", i, numberOfFrames);
+
 		if (i == 1)
 			frame.header = INITIAL_DATA;
 		else if (i == numberOfFrames)
@@ -172,6 +174,25 @@ int Server::sendDir(SOCKET sock)
 			return 0;
 		}
 	}
+
+	if (numberOfFrames == 1)
+	{
+		RecResult result = TIMEOUT;
+
+		frame.header = FINAL_DATA;
+		while (result == RecResult::TIMEOUT)
+		{
+			bytes_count += sendFrame(sock, &frame);
+			result = recAck(sock, &ack);
+		}
+
+		if (result == RecResult::REC_ERR)
+		{
+			err_sys("Failure sending directory to client");
+			return 0;
+		}
+	}
+
 
 	return bytes_count;
 }
@@ -416,7 +437,7 @@ void Server::run()
 		if (TRACESER)
 			fout << "Server received handshake C" << hs.client_number << endl;
 
-		//check to see if it's a GET/PUT or INVALID handshake
+		//check to see if it's a GET/PUT/LIST or INVALID handshake
 		if ( hs.direction == GET )
 		{
 			cout << "The user \"" << hs.username << "\" from hostname \"" << hs.hostname << "\" is requesting the file: \"" << hs.filename << "\" as a GET command" << endl;
@@ -443,7 +464,8 @@ void Server::run()
 		}
 		else if (hs.direction == LIST)
 		{
-			sendDir(sock);
+			cout << "User selected LIST\n";
+			hs.type = ACK_CNUM;
 		}
 		else
 		{
@@ -523,6 +545,10 @@ void Server::run()
 								err_sys("An error occurred while receiving the file.");	
 							break;
 
+						case LIST:
+							if (!sendDir(sock))
+								err_sys("An error occured while sending directory.");
+							break;
 						default:
 							break;
 					}

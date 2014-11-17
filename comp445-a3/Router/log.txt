@@ -5,73 +5,13 @@ Router: Receive packet 0 from peer host 1
 Router: Send packet 0 received from peer host 1 to host 2
 Router: Receive packet 0 from peer host 2
 Router: Send packet 0 received from peer host 2 to host 1
+Router: Receive packet 1 from peer host 1
+Router: Send packet 1 received from peer host 1 to host 2
 Router: Receive packet 1 from peer host 2
 Router: Send packet 1 received from peer host 2 to host 1
+Router: Receive packet 2 from peer host 1
+Router: Send packet 2 received from peer host 1 to host 2
 Router: Receive packet 2 from peer host 2
 Router: Send packet 2 received from peer host 2 to host 1
-Router: Receive packet 3 from peer host 2
-Router: Send packet 3 received from peer host 2 to host 1
-Router: Receive packet 4 from peer host 2
-Router: Send packet 4 received from peer host 2 to host 1
-Router: Receive packet 5 from peer host 2
-Router: Send packet 5 received from peer host 2 to host 1
-Router: Receive packet 6 from peer host 2
-Router: Send packet 6 received from peer host 2 to host 1
-Router: Receive packet 7 from peer host 2
-Router: Send packet 7 received from peer host 2 to host 1
-Router: Receive packet 8 from peer host 2
-Router: Send packet 8 received from peer host 2 to host 1
-Router: Receive packet 9 from peer host 2
-Router: Send packet 9 received from peer host 2 to host 1
-Router: Receive packet 10 from peer host 2
-Router: Send packet 10 received from peer host 2 to host 1
-Router: Receive packet 11 from peer host 2
-Router: Send packet 11 received from peer host 2 to host 1
-Router: Receive packet 12 from peer host 2
-Router: Send packet 12 received from peer host 2 to host 1
-Router: Receive packet 13 from peer host 2
-Router: Send packet 13 received from peer host 2 to host 1
-Router: Receive packet 14 from peer host 2
-Router: Send packet 14 received from peer host 2 to host 1
-Router: Receive packet 15 from peer host 2
-Router: Send packet 15 received from peer host 2 to host 1
-Router: Receive packet 16 from peer host 2
-Router: Send packet 16 received from peer host 2 to host 1
-Router: Receive packet 17 from peer host 2
-Router: Send packet 17 received from peer host 2 to host 1
-Router: Receive packet 18 from peer host 2
-Router: Send packet 18 received from peer host 2 to host 1
-Router: Receive packet 19 from peer host 2
-Router: Send packet 19 received from peer host 2 to host 1
-Router: Receive packet 20 from peer host 2
-Router: Send packet 20 received from peer host 2 to host 1
-Router: Receive packet 21 from peer host 2
-Router: Send packet 21 received from peer host 2 to host 1
-Router: Receive packet 22 from peer host 2
-Router: Send packet 22 received from peer host 2 to host 1
-Router: Receive packet 23 from peer host 2
-Router: Send packet 23 received from peer host 2 to host 1
-Router: Receive packet 24 from peer host 2
-Router: Send packet 24 received from peer host 2 to host 1
-Router: Receive packet 25 from peer host 2
-Router: Send packet 25 received from peer host 2 to host 1
-Router: Receive packet 26 from peer host 2
-Router: Send packet 26 received from peer host 2 to host 1
-Router: Receive packet 27 from peer host 2
-Router: Send packet 27 received from peer host 2 to host 1
-Router: Receive packet 28 from peer host 2
-Router: Send packet 28 received from peer host 2 to host 1
-Router: Receive packet 29 from peer host 2
-Router: Send packet 29 received from peer host 2 to host 1
-Router: Receive packet 30 from peer host 2
-Router: Send packet 30 received from peer host 2 to host 1
-Router: Receive packet 31 from peer host 2
-Router: Send packet 31 received from peer host 2 to host 1
-Router: Receive packet 32 from peer host 2
-Router: Send packet 32 received from peer host 2 to host 1
-Router: Receive packet 33 from peer host 2
-Router: Send packet 33 received from peer host 2 to host 1
-Router: Receive packet 34 from peer host 2
-Router: Send packet 34 received from peer host 2 to host 1
-Router: Receive packet 35 from peer host 2
-Router: Send packet 35 received from peer host 2 to host 1
+Router: Receive packet 3 from peer host 1
+Router: Send packet 3 received from peer host 1 to host 2

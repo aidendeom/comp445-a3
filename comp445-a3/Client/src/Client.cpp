@@ -245,6 +245,9 @@ bool Client::recFile(int sock, char * filename, char * recHost, int cliNum)
 
 bool Client::recDir(SOCKET sock, std::string& outstring)
 {
+
+	printf("got into the function");
+
 	Msg frame;
 	Ack ack;
 	ack.packet_type = PktType::FRAME_ACK;
@@ -260,7 +263,7 @@ bool Client::recDir(SOCKET sock, std::string& outstring)
 
 	if (result == RecRes::RECEIVE_ERROR)
 	{
-		err_sys("Failure receiving directory from server");
+		err_sys("Failure receiving frame from server");
 		return false;
 	}
 	if (frame.header != INITIAL_DATA)
@@ -270,7 +273,7 @@ bool Client::recDir(SOCKET sock, std::string& outstring)
 	}
 
 	ack.number = frame.snwseq;
-	if (sendAck(sock, &ack))
+	if (!sendAck(sock, &ack))
 		return false;
 
 	ss.write(frame.buffer, frame.buffer_length);
@@ -285,7 +288,7 @@ bool Client::recDir(SOCKET sock, std::string& outstring)
 		}
 		if (result == RecRes::RECEIVE_ERROR)
 		{
-			err_sys("Failure receiving directory from server");
+			err_sys("Failure receiving frame from server");
 			return false;
 		}
 
@@ -296,11 +299,12 @@ bool Client::recDir(SOCKET sock, std::string& outstring)
 		}
 
 		ack.number = frame.snwseq;
-		if (sendAck(sock, &ack))
+		if (!sendAck(sock, &ack))
 			return false;
 	}
 
 	outstring = ss.str();
+	return true;
 }
 
 //RECEIVE RESPONSE
@@ -517,7 +521,7 @@ void Client::run()
 			else
 			{
 				invalidCommand = true;
-				err_sys("Invalid direction. Use \"get\" or \"put\" or \"exit\".");
+				err_sys("Invalid direction. Use \"get\" or \"put\" or \"list\" or \"exit\".");
 			}
 
 		} while (invalidCommand);
@@ -526,7 +530,7 @@ void Client::run()
 		if (strncmp(direction, "exit", 4) == 0)
 			break ;
 
-		//if the command is PUT, check for the filename
+		//if the command is PUT or GET, check for the filename
 		bool invalidFilename = false;
 		if (strcmp(direction, "get") == 0 || strcmp(direction, "put") == 0)
 		{
