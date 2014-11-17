@@ -5,6 +5,10 @@ VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client", "Client\Client.vcxproj", "{737C823C-8CA8-42C7-9854-2300611A46F8}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Server", "Server\Server.vcxproj", "{F3B17032-A740-4270-875B-23809B0943FC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Router", "Router\Router.vcxproj", "{1CF5C34E-6852-4702-8F24-A2409B0BECBF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -15,6 +19,14 @@ Global
 		{737C823C-8CA8-42C7-9854-2300611A46F8}.Debug|Win32.Build.0 = Debug|Win32
 		{737C823C-8CA8-42C7-9854-2300611A46F8}.Release|Win32.ActiveCfg = Release|Win32
 		{737C823C-8CA8-42C7-9854-2300611A46F8}.Release|Win32.Build.0 = Release|Win32
+		{F3B17032-A740-4270-875B-23809B0943FC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F3B17032-A740-4270-875B-23809B0943FC}.Debug|Win32.Build.0 = Debug|Win32
+		{F3B17032-A740-4270-875B-23809B0943FC}.Release|Win32.ActiveCfg = Release|Win32
+		{F3B17032-A740-4270-875B-23809B0943FC}.Release|Win32.Build.0 = Release|Win32
+		{1CF5C34E-6852-4702-8F24-A2409B0BECBF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1CF5C34E-6852-4702-8F24-A2409B0BECBF}.Debug|Win32.Build.0 = Debug|Win32
+		{1CF5C34E-6852-4702-8F24-A2409B0BECBF}.Release|Win32.ActiveCfg = Release|Win32
+		{1CF5C34E-6852-4702-8F24-A2409B0BECBF}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
