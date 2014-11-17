@@ -2,8 +2,8 @@
 
 int main(int argc, char* argv[])
 {
-	Client *c = new Client();
-	c->run();
+	Client c;
+	c.run();
 
 	return 0;
 }

@@ -2,9 +2,8 @@
 
 int main(void)
 {
-	Server *ser = new Server();
-	ser->run();
-
+	Server ser;
+	ser.run();
 
 	return 0;
 }
