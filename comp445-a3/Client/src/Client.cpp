@@ -1,7 +1,9 @@
 #include "client.h"
+#include "../../include/dirent.h"
+#include "../../include/utils.h"
 #include <vector>
-#include <dirent.h>
-#include <utils.h>
+//#include <dirent.h>
+//#include <utils.h>
 #include <sstream>
 
 using namespace std;
@@ -407,54 +409,12 @@ int Client::sendAck(int sock, Ack * ack)
 	return sendto(sock, (const char*)ack, sizeof(*ack), 0, (struct sockaddr*)&sa_in, sizeof(sa_in));
 }
 
-//NOT IN USE
-string ExePath()
-{
-    char buffer[MAX_PATH];
-   // GetModuleFileName( NULL, buffer, MAX_PATH );
-    string::size_type pos = string( buffer ).find_last_of( "\\/" );
-
-	return string( buffer ).substr( 0, pos);
-}
-void list(char* direction, string path)
-{
-	string folderOption;
-	WIN32_FIND_DATAA ffd;
-	string pathIs;
-	if(strcmp(direction, "get") == 0)
-		folderOption = "Server";
-	else
-		folderOption = "Client";
-
-	
-	vector<string> fileTypes;
-	fileTypes.push_back("/*.txt");
-	fileTypes.push_back("/*.pdf");
-	fileTypes.push_back("/*.jpg");
-	
-	for (int i = 0; i < fileTypes.size(); i++)
-	{
-		pathIs = "";
-		pathIs.append(path);
-		pathIs.append("\\../");
-		pathIs.append(folderOption);
-		pathIs.append(fileTypes[i]);
-			HANDLE hfile=FindFirstFileA(string(pathIs).c_str(), &ffd);
-			do
-			{
-				cout << ffd.cFileName << endl;
-			}
-			while(FindNextFileA(hfile,&ffd));
-
-			FindClose(&ffd);
-	}
-}
-//END NOT IN USE
-
-
 void Client::run()
 {
-	char server[INPUT_LENGTH]; char filename[INPUT_LENGTH]; char direction[INPUT_LENGTH];
+	//removed due to not being in use
+	//char server[INPUT_LENGTH]; 
+
+	char filename[INPUT_LENGTH]; char direction[INPUT_LENGTH];
 	char hostname[HNAME_LENGTH]; char username[UNAME_LENGTH]; char remotehost[HNAME_LENGTH];
 	unsigned long fileName = (unsigned long)	FNAME_LENGTH;
 	bool runContinue = true;
