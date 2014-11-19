@@ -153,6 +153,13 @@ bool Client::recFile(int sock, char * filename, char * recHost, int cliNum)
 
 	if (TRACECLI) { fout << "Receiver started on " << recHost << endl; }
 
+	bool fileThere;
+	fileThere = fileExists(filename);
+	if (fileThere == 1)
+	{
+		appendCopyUpd(filename);
+	}
+
 	FILE * stream;
 	fopen_s(&stream, filename, "w+b");
 	
@@ -247,9 +254,6 @@ bool Client::recFile(int sock, char * filename, char * recHost, int cliNum)
 
 bool Client::recDir(SOCKET sock, std::string& outstring)
 {
-
-	printf("got into the function");
-
 	Msg frame;
 	Ack ack;
 	ack.packet_type = PktType::FRAME_ACK;
