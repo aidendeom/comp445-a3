@@ -1,8 +1,11 @@
 #include "server.h"
-#include <dirent.h>
-#include <utils.h>
+#include "../../include/dirent.h"
+#include "../../include/utils.h"
+//#include <dirent.h>
+//#include <utils.h>
 #include <sstream>
 using namespace std;
+
 
 //return the size of the file
 long GetFileSize(char * filename)
@@ -14,7 +17,7 @@ long GetFileSize(char * filename)
 	return stat_buf.st_size;
 }
 
-//sned the file to client during a GET request 
+//send the file to client during a GET request 
 bool Server::sendF(int sock, char * filename, char * sendHost, int cliNum)
 {	
 	Msg frame; 
@@ -210,6 +213,13 @@ bool Server::recFile(int sock, char * filename, char * recHost, int servNum)
 	int seqNum = servNum % 2;
 
 	if (TRACESER) { fout << "Receiver started on " << recHost << endl; }
+
+	bool fileThere;
+	fileThere = fileExists(filename);
+	if (fileThere == 1)
+	{
+		appendCopyUpd(filename);
+	}
 	FILE * stream;
 	fopen_s(&stream, filename, "w+b");
 	
@@ -464,7 +474,9 @@ void Server::run()
 		}
 		else if (hs.direction == LIST)
 		{
-			cout << "User selected LIST\n";
+			cout << "The user \"" << hs.username << "\" from hostname \"" << hs.hostname << "\" is requesting a list of files on the server.\n" << endl;
+			if (TRACESER)
+				fout << "The user \"" << hs.username << "\" from hostname \"" << hs.hostname << "\" is requesting a list of files on the server.\n" << endl;
 			hs.type = ACK_CNUM;
 		}
 		else
