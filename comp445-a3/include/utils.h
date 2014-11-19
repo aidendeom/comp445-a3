@@ -78,6 +78,26 @@ std::string appendCopy(const char filename[])
 	return appendCopy(str);
 }
 
+void appendCopyUpd(const char filename[])
+{
+	//std::string str(filename);
+	//return appendCopy(str);
+	std::string changeFile(filename);
+	int lastindex;
+	std::string rawfile;
+
+	if (changeFile.substr(changeFile.find_last_of(".") + 1) == "txt")
+	{
+		lastindex = changeFile.find_last_of(".");
+		rawfile = changeFile.substr(0, lastindex);
+
+		std::ifstream  src(filename, std::ios::binary);
+		std::ofstream  dst(rawfile + "_copy.txt", std::ios::binary);
+
+		dst << src.rdbuf();
+	}
+}
+
 bool fileExists(const std::string& name)
 {
 	std::ifstream test(name.c_str());
