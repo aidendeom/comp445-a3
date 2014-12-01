@@ -150,6 +150,9 @@ bool Client::recFile(int sock, char * filename, char * recHost, int cliNum)
 	int packetsSent = 0, packetsSentNeeded = 0;
 	int bytes_received = 0, bytes_written = 0, bytes_written_total = 0;
 	int seqNum = cliNum % 2;
+	char willQuit[INPUT_LENGTH];
+	char newFileName[INPUT_LENGTH];
+	bool flagExit = false;
 
 	if (TRACECLI) { fout << "Receiver started on " << recHost << endl; }
 
@@ -157,97 +160,126 @@ bool Client::recFile(int sock, char * filename, char * recHost, int cliNum)
 	fileThere = fileExists(filename);
 	if (fileThere == 1)
 	{
-		appendCopyUpd(filename);
+		cout << "The file already exists in your system.Do you want to rename it?\n";
+		cout << "Type in YES to proceed. Type in NO to exit the transfer.\n";
+		cin >> willQuit; 
+		if (strcmp(willQuit, "no") == 0)
+		{
+			flagExit = true;
+		}
+		else
+		{
+			do
+			{
+				cout << "Please enter in the new filename below. [Please include extension]\n";
+				cin >> newFileName;
+				fileThere = fileExists(newFileName);
+				if (fileThere == 1)
+					cout << "Invalid filename. Please try again.\n";
+				else
+					filename = newFileName; 
+			} while (fileThere == 1);
+		}
 	}
 
-	FILE * stream;
-	fopen_s(&stream, filename, "w+b");
-	
-	if (stream != NULL)
+	if (flagExit != true)
 	{
-		while (1)
-		{ 
-			while( recFrame(sock, &frame) != IN_PKT ) {;}
-			
-			bytes_received += sizeof(frame);
+		FILE * stream;
+		fopen_s(&stream, filename, "w+b");
 
-			if (frame.packet_type == HANDSHAKE)
+		if (stream != NULL)
+		{
+			while (1)
 			{
-				cout << "The client has received handshake C" << hs.client_number << " and S" << hs.server_number << endl;
-				if (TRACECLI)
-					fout << "The client has received handshake C" << hs.client_number << " and S" << hs.server_number << endl;
-			
-				if ( sendReq(sock, &hs, &sa_in) != sizeof(hs) )
-					err_sys("Error in sending packet.");
+				while (recFrame(sock, &frame) != IN_PKT) { ; }
 
-				cout << "The client has sent handshake C" << hs.client_number << " and S" << hs.server_number << endl;
-				if (TRACECLI) { fout << "Client sent handshake C" << hs.client_number << " and S" << hs.server_number << endl; }
+				bytes_received += sizeof(frame);
+
+				if (frame.packet_type == HANDSHAKE)
+				{
+					cout << "The client has received handshake C" << hs.client_number << " and S" << hs.server_number << endl;
+					if (TRACECLI)
+						fout << "The client has received handshake C" << hs.client_number << " and S" << hs.server_number << endl;
+
+					if (sendReq(sock, &hs, &sa_in) != sizeof(hs))
+						err_sys("Error in sending packet.");
+
+					cout << "The client has sent handshake C" << hs.client_number << " and S" << hs.server_number << endl;
+					if (TRACECLI) { fout << "Client sent handshake C" << hs.client_number << " and S" << hs.server_number << endl; }
+				}
+				else if (frame.packet_type == FRAME)
+				{
+					cout << endl << "The client has received frame " << (int)frame.snwseq << endl;
+					if (TRACECLI) { fout << "The client received frame " << (int)frame.snwseq << endl; }
+
+					if ((int)frame.snwseq != seqNum)
+					{
+						ack.number = (int)frame.snwseq;
+
+						if (sendAck(sock, &ack) != sizeof(ack))
+							return false;
+
+						cout << "The client has sent ACK " << ack.number << " again" << endl;
+						packetsSent++;
+						if (TRACECLI)
+							fout << "The client sent ACK " << ack.number << " again" << endl;
+					}
+					else
+					{
+						ack.number = (int)frame.snwseq;
+
+						if (sendAck(sock, &ack) != sizeof(ack))
+							return false;
+
+						cout << "The client has sent ACK " << ack.number << endl;
+						if (TRACECLI) { fout << "The client sent ACK " << ack.number << endl; }
+
+						packetsSent++;
+						packetsSentNeeded++;
+
+						byte_count = frame.buffer_length;
+						bytes_written = fwrite(frame.buffer, sizeof(char), byte_count, stream);
+						bytes_written_total += bytes_written;
+
+						seqNum = (seqNum == 0 ? 1 : 0);
+
+						if (frame.header == FINAL_DATA) //stop loop if last frame of file
+							break;
+					}
+				}
 			}
-			else if (frame.packet_type == FRAME)
+
+			fclose(stream);
+
+			cout << endl << "The file transfer is complete" << endl;
+			cout << "The number of packets sent: " << packetsSent << endl;
+			cout << "The number of packets sent with no duplicates: " << packetsSentNeeded << endl;
+			cout << "The number of bytes that have been received: " << bytes_received << endl;
+			cout << "The number of bytes that have been written: " << bytes_written_total << endl << endl;
+
+			if (TRACECLI)
 			{
-				cout << endl << "The client has received frame " << (int)frame.snwseq << endl;
-				if (TRACECLI) { fout << "The client received frame " << (int)frame.snwseq << endl; }
-				
-				if ( (int)frame.snwseq != seqNum )
-				{
-					ack.number = (int)frame.snwseq;
-
-					if ( sendAck(sock, &ack) != sizeof(ack) )
-						return false;
-					
-					cout << "The client has sent ACK " << ack.number << " again" << endl;
-					packetsSent++;
-					if (TRACECLI) 
-						fout << "The client sent ACK " << ack.number << " again" << endl;
-				}
-				else
-				{
-					ack.number = (int)frame.snwseq;	
-					
-					if ( sendAck(sock, &ack) != sizeof(ack) )
-						return false;
-					
-					cout << "The client has sent ACK " << ack.number << endl;
-					if (TRACECLI) { fout << "The client sent ACK " << ack.number << endl; }
-					
-					packetsSent++;
-					packetsSentNeeded++;
-
-					byte_count = frame.buffer_length;
-					bytes_written = fwrite(frame.buffer, sizeof(char), byte_count, stream );
-					bytes_written_total += bytes_written;
-					
-					seqNum = (seqNum == 0 ? 1 : 0);
-
-					if (frame.header == FINAL_DATA) //stop loop if last frame of file
-						break;
-				}
+				fout << "The file transfer is complete" << endl;
+				fout << "The number of packets sent: " << packetsSent << endl;
+				fout << "The number of packets sent with no duplicates: " << packetsSentNeeded << endl;
+				fout << "The number of bytes that have been received: " << bytes_received << endl;
+				fout << "The number of bytes that have been written: " << bytes_written_total << endl << endl;
 			}
+			return true;
 		}
-		
-		fclose( stream );
-
-		cout << endl << "The file transfer is complete" << endl;
-		cout << "The number of packets sent: " << packetsSent << endl;
-		cout << "The number of packets sent with no duplicates: " << packetsSentNeeded << endl;
-		cout << "The number of bytes that have been received: " << bytes_received << endl;
-		cout << "The number of bytes that have been written: " << bytes_written_total << endl << endl;
-
-		if (TRACECLI) 
-		{ 
-			fout << "The file transfer is complete" << endl;
-			fout << "The number of packets sent: " << packetsSent << endl;
-			fout << "The number of packets sent with no duplicates: " << packetsSentNeeded << endl;
-			fout << "The number of bytes that have been received: " << bytes_received << endl;
-			fout << "The number of bytes that have been written: " << bytes_written_total << endl << endl;
+		else
+		{
+			cout << "There was a problem with opening the file." << endl;
+			if (TRACECLI)
+				fout << "Problem with opening the file." << endl;
+			return false;
 		}
-		return true;
 	}
 	else
 	{
-		cout << "There was a problem with opening the file." << endl;
-        if (TRACECLI) 
-			fout << "Problem with opening the file." << endl; 
+		cout << "File transfer has been terminated." << endl;
+		if (TRACECLI)
+			fout << "Client has terminated GET prematurely." << endl;
 		return false;
 	}
 }
@@ -780,6 +812,7 @@ Client::~Client()
 
 	WSACleanup();
 }
+
 void Client::resetTimeout()
 {
 	timeouts.tv_sec = STIMER;

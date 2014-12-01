@@ -29,8 +29,7 @@ int charsToInt(unsigned char bytes[])
 char * getExePath()
 {
 	char *buffer = new char[MAX_PATH];
-	GetCurrentDirectoryA(MAX_PATH, buffer);
-
+	GetCurrentDirectoryA(MAX_PATH, buffer); 
 	return buffer;
 }
 
