@@ -422,6 +422,8 @@ void Client::run()
 	char hostname[HNAME_LENGTH]; char username[UNAME_LENGTH]; char remotehost[HNAME_LENGTH];
 	unsigned long fileName = (unsigned long)	FNAME_LENGTH;
 	bool runContinue = true;
+	char fileRename[INPUT_LENGTH];
+	bool flagRename = false;
 
 	if (WSAStartup(0x0202,&wsadata) != 0)
 	{  
@@ -447,25 +449,30 @@ void Client::run()
 	printf("========================================================\n");
 	printf("How I work\n");
 	printf("========================================================\n");
-	printf("First, type in the command you want to do [GET|PUT|EXIT]\n");
+	printf("First, type in the command you want to do [GET|PUT|LIST|RENAME|EXIT]\n");
 	printf("If GET or PUT, type in the file that you want\n");
 	printf("After, enter the server that you want to connect to\n");
+	printf("If LIST, enter the servername that you would like to see\n");
+	printf("a list of files from.\n");
+	printf("If RENAME, enter the file name that you wish to rename,\n");
+	printf("followed by the new name.\n");
 	printf("========================================================\n\n");
 
-	while ( true )
+	while (true)
 	{
+		flagRename = false;
 		//create the socket
-		if ( (sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0 )
-			err_sys("socket() failed");		
+		if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+			err_sys("socket() failed");
 
 		memset(&sa, 0, sizeof(sa));
 		sa.sin_family = AF_INET;
 		sa.sin_addr.s_addr = htonl(INADDR_ANY);
 		sa.sin_port = htons(CLIENT_PORT);
-		
+
 		//bind to it
-		if (bind( sock, (LPSOCKADDR)&sa, sizeof(sa) ) < 0)
-			err_sys("Socket binding error");		
+		if (bind(sock, (LPSOCKADDR)&sa, sizeof(sa)) < 0)
+			err_sys("Socket binding error");
 
 		//generate rand num for handshake
 		srand((unsigned)time(NULL));
@@ -475,25 +482,36 @@ void Client::run()
 		bool invalidCommand = false;
 		do
 		{
-			cout << "Enter command: "; 
+			cout << "Enter command: ";
 			cin >> direction;
-						
-			if ( strcmp(direction, "get") == 0 || strcmp(direction, "put") == 0 || strcmp(direction, "list") == 0 || strcmp(direction, "exit")==0 )
+
+			if (strcmp(direction, "get") == 0 || strcmp(direction, "put") == 0 || strcmp(direction, "list") == 0 || strcmp(direction, "exit") == 0 ||
+				strcmp(direction, "rename") == 0)
 			{
 				invalidCommand = false;
 			}
 			else
 			{
 				invalidCommand = true;
-				err_sys("Invalid direction. Use \"get\" or \"put\" or \"list\" or \"exit\".");
+				err_sys("Invalid direction. Use \"get\", \"put\", \"list\", \"rename\" or \"exit\".");
 			}
 
 		} while (invalidCommand);
-		
+
 		//check for exit command
 		if (strncmp(direction, "exit", 4) == 0)
-			break ;
+			break;
 
+		if (strcmp(direction, "rename") == 0)
+		{
+			flagRename = true;
+			cout << "Please enter the file you wish to rename. [Type \"cancel\" to quit this command.\"]\n";
+			cin >> fileRename;
+			if (strcmp(fileRename, "cancel") != 0)
+			{
+				cout << "This should work\n";
+			}
+		}
 		//if the command is PUT or GET, check for the filename
 		bool invalidFilename = false;
 		if (strcmp(direction, "get") == 0 || strcmp(direction, "put") == 0)
@@ -523,151 +541,153 @@ void Client::run()
 
 			} while (invalidFilename);
 		}
-		
-		//check the hostname again
-		bool invalidHost = false;
-		do
+
+		if (flagRename != true)
 		{
-			cout << "Enter the server name: "; 
-			cin >> remotehost;
-			struct hostent *rp;
-			rp = gethostbyname(remotehost);
-			if (rp == NULL)
+			//check the hostname again
+			bool invalidHost = false;
+			do
 			{
-				invalidHost = true;
-				err_sys("Unable to connect to the server...");
-			}			
-			else
+				cout << "Enter the server name: ";
+				cin >> remotehost;
+				struct hostent *rp;
+				rp = gethostbyname(remotehost);
+				if (rp == NULL)
+				{
+					invalidHost = true;
+					err_sys("Unable to connect to the server...");
+				}
+				else
+				{
+					invalidHost = false;
+				}
+			} while (invalidHost);
+
+			cout << endl << "========================================" << endl;
+
+			//take user input and copy to the handshake struct
+			strcpy(hs.hostname, hostname);
+			strcpy(hs.username, username);
+			strcpy(hs.filename, filename);
+
+			if (runContinue)
 			{
-				invalidHost = false;
-			}
-		} while (invalidHost);
+				struct hostent *rp;
+				rp = gethostbyname(remotehost);
+				memset(&sa_in, 0, sizeof(sa_in));
+				memcpy(&sa_in.sin_addr, rp->h_addr, rp->h_length);
+				sa_in.sin_family = rp->h_addrtype;
+				sa_in.sin_port = htons(REMOTE_PORT);
+				sa_in_size = sizeof(sa_in);
 
-		cout << endl << "========================================" << endl;
+				//start the handshake with random num
+				hs.client_number = random;
+				hs.type = CLIENT_REQ;
+				hs.packet_type = HANDSHAKE;
 
-		//take user input and copy to the handshake struct
-		strcpy(hs.hostname, hostname);
-		strcpy(hs.username, username);
-		strcpy(hs.filename, filename);
-		
-		if ( runContinue )
-		{
-			struct hostent *rp;
-			rp = gethostbyname(remotehost);
-			memset(&sa_in, 0, sizeof(sa_in) );
-			memcpy(&sa_in.sin_addr, rp->h_addr, rp->h_length);
-			sa_in.sin_family = rp->h_addrtype;
-			sa_in.sin_port = htons(REMOTE_PORT);
-			sa_in_size = sizeof(sa_in);
+				//set what direction you will be using
+				if (strcmp(direction, "get") == 0)
+				{
+					hs.direction = GET;
+				}
+				else if (strcmp(direction, "put") == 0)
+				{
+					hs.direction = PUT;
+				}
+				else if (strcmp(direction, "list") == 0)
+				{
+					hs.direction = LIST;
+				}
 
-			//start the handshake with random num
-			hs.client_number = random;
-			hs.type = CLIENT_REQ;
-			hs.packet_type = HANDSHAKE;
+				if (sendReq(sock, &hs, &sa_in) != sizeof(hs))
+					err_sys("Error in sending packet.");
 
-			//set what direction you will be using
-			if ( strcmp(direction, "get") == 0 )
-			{
-				hs.direction = GET;
-			}
-			else if ( strcmp(direction, "put") == 0 )
-			{
-				hs.direction = PUT;
-			}
-			else if (strcmp(direction, "list") == 0)
-			{
-				hs.direction = LIST;
-			}
-			
-			if ( sendReq(sock, &hs, &sa_in) != sizeof(hs) )
-				err_sys("Error in sending packet.");
-				
-			cout << "The client has sent handshake C" << hs.client_number << endl;
-				
-			if (TRACECLI) 
-			{ 					         
-				fout << "----------------------------------------" << endl;
-				fout << "The client has sent handshake C" << hs.client_number << endl; 
-			}
+				cout << "The client has sent handshake C" << hs.client_number << endl;
 
-			RecRes result = recResp(sock, &hs);
-
-			if(result == RECEIVE_ERROR)
-			{
-				err_sys("An error has been returned.");
-				if (TRACECLI) 
-				{ 
+				if (TRACECLI)
+				{
 					fout << "----------------------------------------" << endl;
-					fout << "Select() has returned an error." << endl; 
+					fout << "The client has sent handshake C" << hs.client_number << endl;
 				}
-			}
-			else if(result == TIMEOUT)
-			{
-				err_sys("Select() timed out.");
-				if (TRACECLI) 
-				{ 
-					fout << "----------------------------------------" << endl;
-					fout << "Select() has timed out." << endl; 
-				}
-			}
-			else //INCOMING PACKET
-			{
-				//if the file does not exist on server
-				if (hs.type == FILE_NE)
-				{
-					cout << "The files does not exist on the server!" << endl;
-					if (TRACECLI) 
-					{ 
-						fout << "---------------------------------------------" << endl;
-						fout << "The server says that the file does not exist!" << endl; 
-					}
-				}
-				else if (hs.type == INVALID) //if the handshake fails
-				{
-					cout << "The request is not valid." << endl;
-					if (TRACECLI) 
-					{ 
-						fout << "----------------------------------------" << endl;
-						fout << "The request is invalid." << endl; 
-					}
-				}
-				if (hs.type == ACK_CNUM) //response from server is ACK
-				{
-					cout << "The client has received handshake C" << hs.client_number << " and S" << hs.server_number << endl;
-					if (TRACECLI) 
-					{ 
-						fout << "----------------------------------------" << endl;
-						fout << "Received handshake C" << hs.client_number << " and S" << hs.server_number << endl; 
-					}
-					
-					//set handshake to ACK for server
-					hs.type = ACK_SNUM;
-					
-					//calculate the sequence number of last correct packet
-					int sequence_number = hs.server_number % 2;
-					
-					//send client response to server (3-way)
-					if ( sendReq(sock, &hs, &sa_in) != sizeof(hs) )
-						err_sys("Error in sending packet.");
 
-					cout << "The client has sent handshake C" << hs.client_number << " and S" << hs.server_number << endl;
-				
-					if (TRACECLI) 
-					{ 
-						fout << "----------------------------------------" << endl;
-						fout << "Send handshake C" << hs.client_number << " and S" << hs.server_number << endl; 
-					}
-				
-					//check that the file is to be sent or received (GET or PUT)
-					std::string directory;
-					switch (hs.direction)
+				RecRes result = recResp(sock, &hs);
+
+				if (result == RECEIVE_ERROR)
+				{
+					err_sys("An error has been returned.");
+					if (TRACECLI)
 					{
+						fout << "----------------------------------------" << endl;
+						fout << "Select() has returned an error." << endl;
+					}
+				}
+				else if (result == TIMEOUT)
+				{
+					err_sys("Select() timed out.");
+					if (TRACECLI)
+					{
+						fout << "----------------------------------------" << endl;
+						fout << "Select() has timed out." << endl;
+					}
+				}
+				else //INCOMING PACKET
+				{
+					//if the file does not exist on server
+					if (hs.type == FILE_NE)
+					{
+						cout << "The files does not exist on the server!" << endl;
+						if (TRACECLI)
+						{
+							fout << "---------------------------------------------" << endl;
+							fout << "The server says that the file does not exist!" << endl;
+						}
+					}
+					else if (hs.type == INVALID) //if the handshake fails
+					{
+						cout << "The request is not valid." << endl;
+						if (TRACECLI)
+						{
+							fout << "----------------------------------------" << endl;
+							fout << "The request is invalid." << endl;
+						}
+					}
+					if (hs.type == ACK_CNUM) //response from server is ACK
+					{
+						cout << "The client has received handshake C" << hs.client_number << " and S" << hs.server_number << endl;
+						if (TRACECLI)
+						{
+							fout << "----------------------------------------" << endl;
+							fout << "Received handshake C" << hs.client_number << " and S" << hs.server_number << endl;
+						}
+
+						//set handshake to ACK for server
+						hs.type = ACK_SNUM;
+
+						//calculate the sequence number of last correct packet
+						int sequence_number = hs.server_number % 2;
+
+						//send client response to server (3-way)
+						if (sendReq(sock, &hs, &sa_in) != sizeof(hs))
+							err_sys("Error in sending packet.");
+
+						cout << "The client has sent handshake C" << hs.client_number << " and S" << hs.server_number << endl;
+
+						if (TRACECLI)
+						{
+							fout << "----------------------------------------" << endl;
+							fout << "Send handshake C" << hs.client_number << " and S" << hs.server_number << endl;
+						}
+
+						//check that the file is to be sent or received (GET or PUT)
+						std::string directory;
+						switch (hs.direction)
+						{
 						case GET:
-							if ( ! recFile(sock, hs.filename, hostname, hs.client_number) )
+							if (!recFile(sock, hs.filename, hostname, hs.client_number))
 								err_sys("An error occurred while receiving the file.");
 							break;
 						case PUT:
-							if ( ! sendF(sock, hs.filename, hostname, hs.server_number) )
+							if (!sendF(sock, hs.filename, hostname, hs.server_number))
 								err_sys("An error occurred while sending the file.");
 							break;
 						case LIST:
@@ -677,30 +697,32 @@ void Client::run()
 							break;
 						default:
 							break;
+						}
+					}
+					else
+					{
+						err_sys("An error has occured while doing the handshake!");
+						fout << "----------------------------------------" << endl;
+						fout << "Error occured during handshake" << endl;
 					}
 				}
-				else
-				{
-					err_sys("An error has occured while doing the handshake!");
-					fout << "----------------------------------------" << endl;
-					fout << "Error occured during handshake" << endl; 
-				}
 			}
-		}
-		
-		//close the client socket connection
-		cout << "Closing the connection between client and server." << endl << endl;		
-		cout << "=================================================" << endl << endl;
-		
-		if (TRACECLI) 
-		{ 
-			fout << "----------------------------------------" << endl;
-			fout << "Closing socket connection." << endl; 
-			fout << "----------------------------------------" << endl;
-		}		
 
+			//close the client socket connection
+			cout << "Closing the connection between client and server." << endl << endl;
+			cout << "=================================================" << endl << endl;
+
+			if (TRACECLI)
+			{
+				fout << "----------------------------------------" << endl;
+				fout << "Closing socket connection." << endl;
+				fout << "----------------------------------------" << endl;
+			}
+
+			
+
+		}
 		closesocket(sock);
-		
 	}
 }
 
