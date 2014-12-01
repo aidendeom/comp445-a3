@@ -422,7 +422,7 @@ void Client::run()
 	char hostname[HNAME_LENGTH]; char username[UNAME_LENGTH]; char remotehost[HNAME_LENGTH];
 	unsigned long fileName = (unsigned long)	FNAME_LENGTH;
 	bool runContinue = true;
-	char fileRename[INPUT_LENGTH];
+	char fileRenameOrig[INPUT_LENGTH]; char newRename[INPUT_LENGTH];
 	bool flagRename = false;
 
 	if (WSAStartup(0x0202,&wsadata) != 0)
@@ -505,11 +505,27 @@ void Client::run()
 		if (strcmp(direction, "rename") == 0)
 		{
 			flagRename = true;
-			cout << "Please enter the file you wish to rename. [Type \"cancel\" to quit this command.\"]\n";
-			cin >> fileRename;
-			if (strcmp(fileRename, "cancel") != 0)
+			cout << "Please enter the file you wish to rename. [Type \"cancel\" to quit this command.]\n";
+			cin >> fileRenameOrig;
+			if (strcmp(fileRenameOrig, "cancel") != 0)
 			{
-				cout << "This should work\n";
+				bool fileHere = fileExists(fileRenameOrig);
+				if (fileHere == true)
+				{
+					cout << "Please enter the new file name. [Please include the extension type]\n";
+					cin >> newRename;
+
+					int result = 0;
+					result = rename(fileRenameOrig, newRename);
+					if (result != 0)
+						cout << "There was an error when trying to rename the file.\n Please try again.\n";
+					else
+						cout << "The file has been successfully renamed from " << fileRenameOrig << " to " << newRename << endl;
+				}
+				else
+				{
+					cout << "We are unable to fulfill the request. The file does not exist.\n";
+				}
 			}
 		}
 		//if the command is PUT or GET, check for the filename
